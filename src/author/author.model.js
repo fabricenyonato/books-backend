@@ -5,8 +5,7 @@ class Author extends BaseModel {
 
     constructor() {
         super();
-        this.firstName = null;
-        this.lastName = null;
+        this.name = null;
     }
 }
 

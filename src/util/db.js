@@ -1,11 +1,12 @@
 const mysql = require('mysql');
+// const {error} = require('./functions');
 
 
 const db = mysql.createConnection({
     host: 'localhost',
     user: 'root',
     password: '',
-    database: 'books-graphql'
+    database: 'books'
 });
 
 function dbQuery(query) {
@@ -13,7 +14,8 @@ function dbQuery(query) {
         db.query(query, (error, results) => {
             if (error) {
                 reject(error);
-                throw error;
+                console.log(error);
+                return;
             }
         
             resolve(results);
@@ -21,4 +23,41 @@ function dbQuery(query) {
     });
 }
 
-module.exports = dbQuery;
+
+function dbTransaction() {
+    return new Promise((resolve, reject) => {
+        db.beginTransaction((error) => {
+            if (error) {
+                reject(error);
+                db.rollback();
+                console.log(error);
+                return;
+            }
+
+            resolve(db);
+        });
+    });
+}
+
+
+function dbCommit() {
+    return new Promise((resolve, reject) => {
+        db.commit((error) => {
+            if (error) {
+                reject(error);
+                db.rollback();
+                console.log(error);
+                return;
+            }
+
+            resolve();
+        });
+    });
+}
+
+
+module.exports = {
+    dbQuery,
+    dbTransaction,
+    dbCommit
+};

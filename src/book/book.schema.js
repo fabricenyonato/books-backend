@@ -6,8 +6,18 @@ const {
     GraphQLList
 } = require('graphql');
 const GraphQlDate = require('graphql-date');
+const {
+    insertBook,
+    findBook,
+    findBooks
+} = require('./book.repository');
 const Book = require('./book.model');
-const dbQuery = require('../util/db');
+const {
+    dbQuery,
+    dbTransaction,
+    dbCommit
+} = require('../util/db');
+const {AuthorType} = require('../author/author.schema');
 
 
 const BookType = new GraphQLObjectType({
@@ -15,57 +25,89 @@ const BookType = new GraphQLObjectType({
     fields: {
         id: {type: GraphQLInt},
         title: {type: GraphQLString},
-        publicationDate: {type: GraphQlDate}
+        publicationDate: {type: GraphQlDate},
+        author: {type: AuthorType}
     }
 });
 
 const bookQueryFields = {
-    getBookById: {
+    findBook: {
         type: BookType,
         args: {
             id: {type: new GraphQLNonNull(GraphQLInt)}
         },
         resolve(parentValue, args) {
-            return dbQuery({
-                sql: `SELECT * FROM book WHERE id=?`,
-                values: [args.id]
-            })
-            .then((results) => {
-                if (results.length > 0) {
-                    const book = new Book();
-                    book.id = results[0].id;
-                    book.title = results[0].title;
-                    book.publicationDate = new Date(results[0].publication_date);
-
-                    return book;
-                }
-
-                throw new Error('Book not found');
-            });
+            return findBook(args.id);
         }
     },
-    getBooks: {
+    findBooks: {
         type: new GraphQLList(BookType),
         resolve(parentValue, args) {
-            return dbQuery('SELECT * FROM book')
-            .then((results) => {
-                const books = [];
-
-                for (const result of results) {
-                    const book = new Book();
-                    book.id = result.id;
-                    book.title = result.title;
-                    book.publicationDate = new Date(result.publication_date);
-
-                    books.push(book);
-                }
-
-                return books;
-            });
+            return findBooks();
         }
     }
 };
 
+
+const bookMutationFields = {
+    addBook: {
+        type: BookType,
+        args: {
+            bookTitle: {type: new GraphQLNonNull(GraphQLString)},
+            bookPublicationDate: {type: new GraphQLNonNull(GraphQlDate)},
+            authorId: {type: GraphQLInt},
+            authorName: {type: GraphQLString}
+        },
+        resolve(parentValue, args) {
+            const params = {
+                    book: {
+                    title: args.bookTitle.trim(),
+                    publicationDate: args.bookPublicationDate,
+                },
+                author: {id: undefined}
+            };
+
+            if (args.authorId) {
+                params.author.id = args.authorId;
+
+                return insertBook(params);
+            } else if (args.authorName) {
+                return dbTransaction()
+                .then((db) => {
+                    return dbQuery({
+                        sql: 'INSERT INTO author(name) VALUES(?)',
+                        values: [args.authorName.trim()]
+                    })
+                    .then((insertAuthorResult) => {
+                        params.author.id = insertAuthorResult.insertId;
+
+                        return insertBook(params)
+                        .then((book) => {
+                            return dbCommit()
+                            .then(() => {
+                                return book;
+                            })
+                        })
+                        .catch((error) => {
+                            db.rollback();
+                            console.log(error);
+                        });
+                    })
+                    .catch((error) => {
+                        db.rollback(() => {
+                            throw error;
+                        });
+                    });
+                });
+            }
+
+            throw new Error('[authorId|authorName] is required' );
+        }
+    }
+};
+
+
 module.exports = {
-    bookQueryFields
+    bookQueryFields,
+    bookMutationFields
 };

@@ -12,8 +12,7 @@ const AuthorType = new GraphQLObjectType({
     name: 'Author',
     fields: {
         id: {type: GraphQLInt},
-        firstName: {type: GraphQLString},
-        lastName: {type: GraphQLString}
+        name: {type: GraphQLString}
     }
 });
 
@@ -26,8 +25,7 @@ const authorQueryFields = {
         resolve(parentValue, args) {
             const author = new Author();
             author.id = args.id;
-            author.firstName = 'First Name';
-            author.lastName = 'LASTNAME';
+            author.name = 'Fkdvgd YUDSI';
 
             return author;
         }
@@ -41,5 +39,6 @@ const authorQueryFields = {
 };
 
 module.exports = {
-    authorQueryFields
+    authorQueryFields,
+    AuthorType
 };

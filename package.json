@@ -8,19 +8,20 @@
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/nykorefa/books-graphql.git"
+    "url": "git+https://github.com/nykorefa/books-backend.git"
   },
   "author": "",
   "license": "ISC",
   "bugs": {
-    "url": "https://github.com/nykorefa/books-graphql/issues"
+    "url": "https://github.com/nykorefa/books-backend/issues"
   },
-  "homepage": "https://github.com/nykorefa/books-graphql#readme",
+  "homepage": "https://github.com/nykorefa/books-backend#readme",
   "dependencies": {
     "express": "^4.16.2",
     "express-graphql": "^0.6.11",
     "graphql": "^0.11.7",
     "graphql-date": "^1.0.3",
+    "graphql-query-builder": "^1.0.7",
     "mysql": "^2.15.0",
     "nodemon": "^1.12.1"
   }

@@ -7,6 +7,7 @@ class Book extends BaseModel {
         super();
         this.title = null;
         this.publicationDate = null;
+        this.author = null;
     }
 }
 
